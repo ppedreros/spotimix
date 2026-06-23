@@ -51,12 +51,16 @@ def _build_auth_manager(scope: str) -> spotipy.SpotifyOAuth:
         show_dialog=True,
     )
 
+def _build_auth_url_with_login_prompt(auth_manager: spotipy.SpotifyOAuth) -> str:
+    """Append prompt=login to force Spotify to show the login screen."""
+    base_url = auth_manager.get_authorize_url()
+    return base_url + "&prompt=login"
 
 def generate_auth_url(*, is_host: bool = False) -> str:
     """Return a Spotify authorization URL the user should open in a browser."""
     scope = HOST_SCOPE if is_host else GUEST_SCOPE
     auth_manager = _build_auth_manager(scope)
-    return auth_manager.get_authorize_url()
+    return _build_auth_url_with_login_prompt(auth_manager)
 
 
 def _wait_for_callback() -> str:
@@ -106,8 +110,7 @@ def onboard_user(*, is_host: bool = False) -> dict:
     """
     scope = HOST_SCOPE if is_host else GUEST_SCOPE
     auth_manager = _build_auth_manager(scope)
-    auth_url = auth_manager.get_authorize_url()
-
+    auth_url = _build_auth_url_with_login_prompt(auth_manager)
     print("\n🔗  Open this URL in your browser to authorize:\n")
     print(f"    {auth_url}\n")
 

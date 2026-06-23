@@ -60,12 +60,14 @@ def create_era(name: str | None = None) -> dict:
     playlist_name = name or f"Era — {now.strftime('%Y-%m-%d')}"
 
     sp = get_host_client()
-    playlist = sp.user_playlist_create(
-        user=HOST_USER_ID,
-        name=playlist_name,
-        public=True,
-        description=f"SpotiMix era playlist created on {now.strftime('%B %d, %Y')}",
-    )
+    playlist = sp._post(
+    "me/playlists",
+    payload={
+        "name": playlist_name,
+        "public": True,
+        "description": f"SpotiMix era playlist created on {now.strftime('%B %d, %Y')}",
+    },
+)
 
     era_record = {
         "playlist_id": playlist["id"],

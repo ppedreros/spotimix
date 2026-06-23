@@ -18,8 +18,7 @@ USERS_PATH = Path(__file__).resolve().parent.parent / "data" / "users.json"
 
 # Spotify's "On Repeat" playlist is owned by the "spotify" account.
 ON_REPEAT_OWNER = "spotify"
-ON_REPEAT_NAME = "On Repeat"
-
+ON_REPEAT_NAMES = {"On Repeat", "En repetición", "En bucle", "Im Repeat"}
 
 def _load_users() -> list[dict]:
     if USERS_PATH.exists():
@@ -28,17 +27,14 @@ def _load_users() -> list[dict]:
 
 
 def _find_on_repeat(sp) -> dict | None:
-    """Search the user's playlists for "On Repeat" owned by Spotify."""
     offset = 0
     limit = 50
 
     while True:
         playlists = sp.current_user_playlists(limit=limit, offset=offset)
         for pl in playlists["items"]:
-            if (
-                pl["name"] == ON_REPEAT_NAME
-                and pl["owner"]["id"] == ON_REPEAT_OWNER
-            ):
+            logger.info("  🔍 Found Spotify playlist: '%s'", pl["name"])
+            if pl["name"] in ON_REPEAT_NAMES:
                 return pl
         if playlists["next"] is None:
             break
