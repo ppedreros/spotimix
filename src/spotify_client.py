@@ -62,7 +62,7 @@ def get_host_client() -> spotipy.Spotify:
             if user.get("user_id") == host_user_id:
                 return get_client(
                     user["refresh_token"],
-                    scope="playlist-modify-public playlist-modify-private playlist-read-private",
+                    scope="playlist-read-private user-top-read",
                 )
 
     # Fallback: interactive OAuth for the host account

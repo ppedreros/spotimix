@@ -26,25 +26,17 @@ def _load_users() -> list[dict]:
     return []
 
 
-def _find_on_repeat(sp) -> dict | None:
-    offset = 0
-    limit = 50
-
-    while True:
-        playlists = sp.current_user_playlists(limit=limit, offset=offset)
-        for pl in playlists["items"]:
-            logger.info("  🔍 Found Spotify playlist: '%s'", pl["name"])
-            if pl["name"] in ON_REPEAT_NAMES:
-                return pl
-        if playlists["next"] is None:
-            break
-        offset += limit
-
-    return None
+def _get_top_tracks(sp) -> set[str]:
+    """Return the user's top track URIs (last ~4 weeks)."""
+    uris = set()
+    results = sp.current_user_top_tracks(limit=20, time_range="short_term")
+    for track in results.get("items", []):
+        if track and track.get("uri"):
+            uris.add(track["uri"])
+    return uris
 
 
 def _get_playlist_track_uris(sp, playlist_id: str) -> set[str]:
-    """Return a set of all track URIs in the given playlist."""
     uris: set[str] = set()
     offset = 0
     limit = 100
@@ -52,12 +44,13 @@ def _get_playlist_track_uris(sp, playlist_id: str) -> set[str]:
     while True:
         results = sp.playlist_items(
             playlist_id,
-            fields="items(track(uri)),next",
             limit=limit,
             offset=offset,
         )
+        print(f"DEBUG raw keys: {results.keys()}")          # ADD THIS
+        print(f"DEBUG items count: {len(results.get('items', []))}")  # AND THIS
         for item in results.get("items", []):
-            track = item.get("track")
+            track = item.get("track") or item.get("item")
             if track and track.get("uri"):
                 uris.add(track["uri"])
         if results.get("next") is None:
@@ -93,6 +86,7 @@ def sync() -> None:
     # Get the current tracks already in the era playlist (for dedup).
     host_sp = get_host_client()
     existing_uris = _get_playlist_track_uris(host_sp, era_playlist_id)
+    print(f"DEBUG: found {len(existing_uris)} existing URIs in era playlist")
 
     total_added = 0
 
@@ -110,13 +104,7 @@ def sync() -> None:
             continue
 
         # Find the "On Repeat" playlist.
-        on_repeat = _find_on_repeat(sp)
-        if not on_repeat:
-            logger.info("  ℹ️  No 'On Repeat' playlist found for %s. Skipping.", display_name)
-            continue
-
-        # Get the user's current "On Repeat" tracks.
-        user_uris = _get_playlist_track_uris(sp, on_repeat["id"])
+        user_uris = _get_top_tracks(sp)
         new_uris = user_uris - existing_uris
 
         if not new_uris:

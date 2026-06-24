@@ -25,10 +25,9 @@ REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8888/callback
 USERS_PATH = Path(__file__).resolve().parent.parent / "data" / "users.json"
 
 # Guest users only need to read their private playlists (for "On Repeat").
-GUEST_SCOPE = "playlist-read-private"
-
+GUEST_SCOPE = "playlist-read-private user-top-read"
 # Host account needs playlist-modify permissions.
-HOST_SCOPE = "playlist-modify-public playlist-modify-private playlist-read-private"
+HOST_SCOPE = "playlist-modify-public playlist-modify-private playlist-read-private user-top-read"
 
 
 def _load_users() -> list[dict]:
